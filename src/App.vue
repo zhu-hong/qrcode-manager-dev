@@ -3,7 +3,7 @@ import { computed, reactive, ref } from '@vue/reactivity'
 import Qr from 'qrcode.vue'
 import { nanoid } from 'nanoid'
 import zip from 'jszip'
-import { nextTick } from '@vue/runtime-core'
+import { nextTick, onMounted } from '@vue/runtime-core'
 import htc from 'html2canvas'
 
 const currentQr = ref(null)
@@ -14,139 +14,10 @@ const selectedQr = reactive([])
 const curPage = ref(1)
 const pageSize = 5
 
-const qrcodeList = [
-  {
-    id: nanoid(),
-    text: '1',
-  },
-  {
-    id: nanoid(),
-    text: '2',
-  },
-  {
-    id: nanoid(),
-    text: '3',
-  },
-  {
-    id: nanoid(),
-    text: '4',
-  },
-  {
-    id: nanoid(),
-    text: '5',
-  },
-  {
-    id: nanoid(),
-    text: '6',
-  },
-  {
-    id: nanoid(),
-    text: '7',
-  },
-  {
-    id: nanoid(),
-    text: '8',
-  },
-  {
-    id: nanoid(),
-    text: '9',
-  },
-  {
-    id: nanoid(),
-    text: '10',
-  },
-  {
-    id: nanoid(),
-    text: '11',
-  },
-  {
-    id: nanoid(),
-    text: '12',
-  },
-  {
-    id: nanoid(),
-    text: '13',
-  },
-  {
-    id: nanoid(),
-    text: '14',
-  },
-  {
-    id: nanoid(),
-    text: '15',
-  },
-  {
-    id: nanoid(),
-    text: '16',
-  },
-  {
-    id: nanoid(),
-    text: '17',
-  },
-  {
-    id: nanoid(),
-    text: '18',
-  },
-  {
-    id: nanoid(),
-    text: '19',
-  },
-  {
-    id: nanoid(),
-    text: '20',
-  },
-  {
-    id: nanoid(),
-    text: '21',
-  },
-  {
-    id: nanoid(),
-    text: '22',
-  },
-  {
-    id: nanoid(),
-    text: '23',
-  },
-  {
-    id: nanoid(),
-    text: '24',
-  },
-  {
-    id: nanoid(),
-    text: '25',
-  },
-  {
-    id: nanoid(),
-    text: '26',
-  },
-]
-
-const tableData = computed(() => {
-  let [len, index, pages] = [qrcodeList.length, 0, []]
-  pages.push(null)
-  while (index < len) {
-    pages.push(qrcodeList.slice(index, index += pageSize))
-  }
-  return pages[curPage.value]
-})
-
-const temList = reactive([
-  {
-    id: 'c1',
-    value: 1,
-  },
-  {
-    id: 'c2',
-    value: 2,
-  },
-  {
-    id: 'c3',
-    value: 3,
-  },
-])
+let qrcodeList = ref([])
 
 const handleSelect = (value) => {
-  selectedQr.length = 0
+  console.log(value)
   value.forEach(({ id, text }) => {
     selectedQr.push({ id, text })
   })
@@ -202,24 +73,30 @@ const printQrs = () => {
   printer.value.contentWindow.print()
 }
 
-const curChange = (value) => {
-  curPage.value = value
+const curChange = async (value) => {
+  const response = await fetch(`http://jsonplaceholder.typicode.com/posts?_limit=${pageSize}&_page=${value}`)
+  const result = await response.json()
+  qrcodeList.value = result
 }
+
+onMounted(() => {
+  curChange(1)
+})
 </script>
 
 <template>
   <div style="position: relative;">
-    <el-table :data="tableData" @selection-change="handleSelect">
-      <el-table-column type="selection" :width="50" />
+    <el-table :data="qrcodeList" @selection-change="handleSelect" :row-key="(row) => row.id">
+      <el-table-column type="selection" :width="50" :reserve-selection="true" />
       <el-table-column label="id">
         <template #default="scope">{{ scope.row.id }}</template>
       </el-table-column>
       <el-table-column label="内容">
-        <template #default="scope">{{ scope.row.text }}</template>
+        <template #default="scope">{{ scope.row.title }}</template>
       </el-table-column>
       <el-table-column label="预览">
         <template #default="scope">
-          <el-button @click="showDialog(scope.row.text)">预览</el-button>
+          <el-button @click="showDialog(scope.row.body)">预览</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -233,7 +110,7 @@ const curChange = (value) => {
   </div>
   <el-pagination
     layout="prev, pager, next"
-    :total="qrcodeList.length"
+    :total="100"
     :page-size="pageSize"
     @current-change="curChange"
   ></el-pagination>
@@ -254,20 +131,20 @@ const curChange = (value) => {
 
   <!-- 二维码容器用于下载 -->
   <!-- <div style="display: none;"> -->
-  <div>
+  <!-- <div>
     <template v-for="qr in selectedQr" :key="qr.id">
       <div :id="qr.id">
         <Qr :value="qr.text" />
       </div>
     </template>
-  </div>
+  </div> -->
 
   <!-- 用于打印 -->
-  <iframe ref="printer" style="display: none;" title="printer"></iframe>
+  <!-- <iframe ref="printer" style="display: none;" title="printer"></iframe>
 
   <el-dialog v-model="dialogShow">
     <Qr :value="currentQr" style="width: 100%; height: 100%;" />
-  </el-dialog>
+  </el-dialog> -->
 </template>
 
 <style>
