@@ -82,12 +82,22 @@ const curChange = async (value) => {
 onMounted(() => {
   curChange(1)
 })
+
+const ps = ref(1)
+
+const cc = ({ id }) => {
+  console.log(id)
+  ps.value = id
+}
 </script>
 
 <template>
   <div style="position: relative;">
-    <el-table :data="qrcodeList" @selection-change="handleSelect" :row-key="(row) => row.id">
-      <el-table-column type="selection" :width="50" :reserve-selection="true" />
+    <el-table :data="qrcodeList" @selection-change="handleSelect" :row-key="(row) => row.id" @current-change="cc">
+      <!-- <el-table-column type="selection" :width="50" :reserve-selection="true" /> -->
+      <el-table-column #default="{ row }">
+        <el-radio v-model="ps" :label="row.id"></el-radio>
+      </el-table-column>
       <el-table-column label="id">
         <template #default="scope">{{ scope.row.id }}</template>
       </el-table-column>
