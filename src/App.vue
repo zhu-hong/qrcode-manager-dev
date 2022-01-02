@@ -3,7 +3,7 @@ import { computed, reactive, ref } from '@vue/reactivity'
 import Qr from 'qrcode.vue'
 import { nanoid } from 'nanoid'
 import zip from 'jszip'
-import { nextTick, onMounted } from '@vue/runtime-core'
+import { getCurrentInstance, nextTick, onMounted } from '@vue/runtime-core'
 import htc from 'html2canvas'
 
 const currentQr = ref(null)
@@ -17,7 +17,6 @@ const pageSize = 5
 let qrcodeList = ref([])
 
 const handleSelect = (value) => {
-  console.log(value)
   value.forEach(({ id, text }) => {
     selectedQr.push({ id, text })
   })
@@ -89,12 +88,19 @@ const cc = ({ id }) => {
   console.log(id)
   ps.value = id
 }
+
+const ins = getCurrentInstance()
+
+nextTick(() => {
+  ins.refs.table.toggleRowSelection({ id: 6 }, true)
+})
+
 </script>
 
 <template>
   <div style="position: relative;">
-    <el-table :data="qrcodeList" @selection-change="handleSelect" :row-key="(row) => row.id" @current-change="cc">
-      <!-- <el-table-column type="selection" :width="50" :reserve-selection="true" /> -->
+    <el-table :data="qrcodeList" @selection-change="handleSelect" :row-key="(row) => row.id" @current-change="cc" ref="table">
+      <el-table-column type="selection" :width="50" :reserve-selection="true" />
       <el-table-column #default="{ row }">
         <el-radio v-model="ps" :label="row.id"></el-radio>
       </el-table-column>
